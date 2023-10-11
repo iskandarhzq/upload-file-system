@@ -2,17 +2,19 @@
 
 namespace App\Livewire;
 
+use App\Imports\CsvProcessImport;
 use App\Models\Document;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Maatwebsite\Excel\Facades\Excel;
 use Ramsey\Uuid\Uuid;
 
 class UploadDocument extends Component
 {
     use WithFileUploads;
 
-    public $listeners = ['storeUploadDocument'];
+    public $listeners = ['storeUploadDocument', '$refresh'];
 
     public $uploadFiles = [];
 
@@ -46,12 +48,22 @@ class UploadDocument extends Component
                 'hashname' => $uploadFile->hashName(),
                 'type' => 'csv-file',
             ]);
+
+            Excel::queueImport(new CsvProcessImport($document), Storage::path($document->path));
         }
+
+        $this->reset('uploadFiles');
     }
 
     public function removeUpload($index)
     {
         array_splice($this->uploadFiles, $index, 1);
+    }
+
+    public function deleteUploadedDocument(Document $document)
+    {
+        $document->delete();
+        $this->emit('refresh');
     }
 
     public function clearUploadDocument()
