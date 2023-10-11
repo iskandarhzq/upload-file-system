@@ -3,11 +3,11 @@
 namespace App\Livewire;
 
 use App\Imports\CsvProcessImport;
+use App\Jobs\UploadDocumentJob;
 use App\Models\Document;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Maatwebsite\Excel\Facades\Excel;
 use Ramsey\Uuid\Uuid;
 
 class UploadDocument extends Component
@@ -49,7 +49,9 @@ class UploadDocument extends Component
                 'type' => 'csv-file',
             ]);
 
-            Excel::queueImport(new CsvProcessImport($document), Storage::path($document->path));
+            (new CsvProcessImport($document))->queue(Storage::path($document->path))->chain([
+                new UploadDocumentJob($document),
+            ]);
         }
 
         $this->reset('uploadFiles');

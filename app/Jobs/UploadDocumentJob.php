@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\UploadDocumentStatus;
 use App\Models\Document;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,7 +32,7 @@ class UploadDocumentJob implements ShouldQueue
     public function handle(): void
     {
         $this->document->update([
-            'status' => 3,
+            'status' => UploadDocumentStatus::COMPLETED,
         ]);
     }
 }

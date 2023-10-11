@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UploadDocumentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -32,6 +33,10 @@ class Document extends Model
      * @var array
      */
     protected $fillable = ['uuid', 'parent_id', 'original_filename', 'path', 'hashname', 'is_s3', 'mime_type', 'type', 'title', 'description', 'status', 'created_at', 'updated_at', 'deleted_at'];
+
+    protected $casts = [
+        'status' => UploadDocumentStatus::class,
+    ];
 
     public function csvDetails(): HasMany
     {

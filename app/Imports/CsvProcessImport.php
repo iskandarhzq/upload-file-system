@@ -2,9 +2,12 @@
 
 namespace App\Imports;
 
+use App\Enums\UploadDocumentStatus;
 use App\Models\CsvDetail;
 use App\Models\Document;
+use ForceUTF8\Encoding;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -13,6 +16,8 @@ use Maatwebsite\Excel\Events\ImportFailed;
 
 class CsvProcessImport implements ShouldQueue, ToModel, WithChunkReading, WithHeadingRow, WithUpserts
 {
+    use Importable;
+
     public $document;
 
     public function __construct(Document $document)
@@ -31,20 +36,20 @@ class CsvProcessImport implements ShouldQueue, ToModel, WithChunkReading, WithHe
     public function model(array $row)
     {
         $this->document->update([
-            'status' => 1,
+            'status' => UploadDocumentStatus::PROCESSING,
         ]);
 
         CsvDetail::updateOrCreate([
             'document_id' => $this->document->id,
             'unique_key' => trim($row['unique_key']),
         ], [
-            'product_title' => mb_convert_encoding(trim($row['product_title']), 'UTF-8', 'UTF-8'),
-            'product_description' => mb_convert_encoding(trim($row['product_description']), 'UTF-8', 'UTF-8'),
-            'style' => mb_convert_encoding(trim($row['style']), 'UTF-8', 'UTF-8'),
-            'sanmar_mainframe_color' => mb_convert_encoding(trim($row['sanmar_mainframe_color']), 'UTF-8', 'UTF-8'),
-            'size' => mb_convert_encoding(trim($row['size']), 'UTF-8', 'UTF-8'),
-            'color_name' => mb_convert_encoding(trim($row['color_name']), 'UTF-8', 'UTF-8'),
-            'piece_price' => mb_convert_encoding(trim($row['piece_price']), 'UTF-8', 'UTF-8'),
+            'product_title' => Encoding::toUTF8(trim($row['product_title'])),
+            'product_description' => Encoding::toUTF8(trim($row['product_description'])),
+            'style' => Encoding::toUTF8(trim($row['style'])),
+            'sanmar_mainframe_color' => Encoding::toUTF8(trim($row['sanmar_mainframe_color'])),
+            'size' => Encoding::toUTF8(trim($row['size'])),
+            'color_name' => Encoding::toUTF8(trim($row['color_name'])),
+            'piece_price' => Encoding::toUTF8(trim($row['piece_price'])),
         ]);
     }
 
@@ -53,14 +58,19 @@ class CsvProcessImport implements ShouldQueue, ToModel, WithChunkReading, WithHe
         return [
             ImportFailed::class => function (ImportFailed $event) {
                 $this->document->update([
-                    'status' => 2,
+                    'status' => UploadDocumentStatus::FAILED,
                 ]);
             },
         ];
     }
 
+    public function retryUntil()
+    {
+        return now()->addSeconds(5);
+    }
+
     public function chunkSize(): int
     {
-        return 300;
+        return 500;
     }
 }
