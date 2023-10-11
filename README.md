@@ -18,4 +18,4 @@ Two situations can be tested:
 
 ## How to test upsert data for second upload?
 
-- For given sample csv file replace name from 'yoprint_test_updated.csv` to `yoprint_test_import.csv`
+- For given sample csv file replace name from 'yoprint_test_updated.csv' to 'yoprint_test_import.csv'
